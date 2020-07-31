@@ -49,6 +49,9 @@ class Stack{
     bool empty() const;
     // EFFECTS: return true if the stack is empty, return false otherwise.
 
+    ~Stack();
+    // EFFECTS: delete all the dynamically allocated memory in the stack.
+
 
     private:
 
@@ -86,6 +89,13 @@ bool Stack<T>::empty() const {
     return stack.isEmpty();
 }
 // EFFECTS: return true if the stack is empty, return false otherwise.
+
+template <class T>
+Stack<T>::~Stack() {
+    while(!empty()){
+        this->pop();
+    }
+}
 
 bool greaterPrecedence(const string & str1, const string & str2){
     if(str1 == "(" || str1 == ")"){
@@ -127,6 +137,7 @@ void getRPN(string * str, string * out, Stack<string> & s){
     if(str[0] != "+" && str[0] != "-" && str[0] != "*" && str[0] != "/"
     && str[0] != "(" && str[0] != ")"){
         *out = *out + (*str) + " ";
+        delete str;
     }
     else if((*str) == "+" || (*str) == "-" || (*str) == "*" || (*str) == "/"){
         // operator
@@ -151,6 +162,9 @@ void getRPN(string * str, string * out, Stack<string> & s){
         // If the stack runs out without finding a left parenthesis, then mismatched.
         if(s.empty()){
             /// exception
+            ostringstream oStream;
+            oStream << "ERROR: Parenthesis mismatch" << endl;
+            throw Exception_t(PARENTHESIS_MISMATCH, oStream.str());
         }
         if(*s.top() == "("){
             s.pop();
@@ -199,6 +213,10 @@ int stack_divide(Stack<int> & s){
     s.pop();
     if(value == 0){
         ///exception: divide by 0.
+        ostringstream oStream;
+        oStream << "ERROR: Divide by zero" << endl;
+
+        throw Exception_t(TOO_MANY_OPERANDS, oStream.str());
     }
     value = *s.top() / value;
     s.pop();
@@ -219,60 +237,44 @@ void evaluate(string * out){
         }
         else{
             /// exception: too many operands or not enough operands.
+
             //plus
             int *val = new int;
-            if(op == "+"){
-                *val = stack_plus(istack);
+            try{
+                if(op == "+"){
+                    *val = stack_plus(istack);
+                }
+                // minus
+                if(op == "-"){
+                    *val = stack_minus(istack);
+                }
+                // multiply
+                if(op == "*"){
+                    *val = stack_multi(istack);
+                }
+                /// divide: there is an exception.
+                if(op == "/"){
+                    *val = stack_divide(istack);
+                }
             }
-            // minus
-            if(op == "-"){
-                *val = stack_minus(istack);
-            }
-            // multiply
-            if(op == "*"){
-                *val = stack_multi(istack);
-            }
-            /// divide: there is an exception.
-            if(op == "/"){
-                *val = stack_divide(istack);
+            catch(emptyList &e){
+                throw e;
             }
             istack.push(val);
         }
     }
-    cout << *istack.top() << endl;
+    int result = *istack.top();
     istack.pop();
+    if(!istack.empty()){
+        ostringstream oStream;
+        oStream << "ERROR: Too many operands" << endl;
+        throw Exception_t(TOO_MANY_OPERANDS, oStream.str());
+    }
+    cout << result << endl;
 }
 
 
 int main(){
-    /*Stack<int> a;
-
-    int *n = new int(1);
-    int *l = new int(2);
-    int *k = new int(3);
-    int *s = new int(4);
-    a.push(n);
-    assert(*a.top() == 1);
-    a.push(l);
-    assert(*a.top() == 2);
-    a.push(k);
-    assert(*a.top() == 3);
-    a.push(s);
-    assert(*a.top() == 4);
-    a.pop();
-    assert(*a.top() == 3);
-    a.push(s);
-    assert(*a.top() == 4);
-    a.pop();
-    a.pop();
-    assert(*a.top() == 2);
-
-
-    delete n;
-    delete l;
-    delete k;
-    delete s;*/
-
     Stack<string> s;
 
     string *out = new string("");
@@ -282,13 +284,22 @@ int main(){
     getline(cin, input);
     istringstream iStream(input);
 
-    while(iStream >> temp){
-        // read a token.
-        string *str = new string("");
-        *str = temp;
-        // cout << *str << endl;
-        getRPN(str, out, s);
+    try{
+        while(iStream >> temp){
+            // read a token.
+            string *str = new string("");
+            *str = temp;
+            // cout << *str << endl;
+            getRPN(str, out, s);
+        }
     }
+    catch(Exception_t &exception){
+        cout << exception.error_info;
+        delete out;
+        return 0;
+    }
+
+
 
     while(!s.empty()){
         // mismatch if there exists parenthesis
@@ -300,9 +311,12 @@ int main(){
                 throw Exception_t(PARENTHESIS_MISMATCH, oStream.str());
             }
         }
-        catch(Exception_t exception){
+        catch(Exception_t &exception){
             cout << exception.error_info;
+            delete out;
+            return 0;
         }
+
         // pop all the operators to output string
         string t = *s.top();
         *out = *out + t + " ";
@@ -310,7 +324,19 @@ int main(){
     }
 
     cout << *out << endl;
-    evaluate(out);
+    try{
+        evaluate(out);
+    }
+    catch(Exception_t &exception){
+        cout << exception.error_info;
+        delete out;
+        return 0;
+    }
+    catch(emptyList &e){
+        cout << "ERROR: Not enough operands" << endl;
+        delete out;
+        return 0;
+    }
     delete out;
     return 0;
 }

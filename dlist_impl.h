@@ -26,8 +26,9 @@ void Dlist<T>::insertFront(T *op) {
     node *n = new node;
     n->op = op;
     n->prev = nullptr;
-    n->next = first;
+    n->next = nullptr;
     if(first){
+        n->next = first;
         first->prev = n;
     }
     first = n;
@@ -76,7 +77,9 @@ T *Dlist<T>::removeFront() {
     // normal case
     T* result = first->op;
     first = first->next;
+    first->prev->next = nullptr;
     delete first->prev;
+    first->prev = nullptr;
     return result;
 }
 // MODIFIES: this
@@ -101,7 +104,9 @@ T *Dlist<T>::removeBack() {
 
     // normal case
     last = last->prev;
+    last->next->prev = nullptr;
     delete last->next;
+    last->next = nullptr;
     return result;
 
 }
@@ -137,10 +142,13 @@ template <class T>
 T *Dlist<T>::remove(bool (*cmp)(const T*, const T*), T* ref) {
     node * it = first;
 
-    // if the first element satisfies.
-    if(cmp(it->op, ref)){
-        return removeFront();
+    if(!it){
+        return nullptr;
     }
+    // if the first element satisfies.
+    //if(cmp(it->op, ref)){
+     //   return removeFront();
+    //}
 
     // if the first element does not satisfy.
     while(it){
