@@ -10,6 +10,9 @@
 
 using namespace std;
 
+class AddressOutofBound{};
+// exception class: address out of bound
+
 class LRUCache{
 private:
     int mem_size; // size of memory
@@ -95,6 +98,9 @@ LRUCache::~LRUCache(){
 int LRUCache::read(int address){
     if(address < 0 || address >= mem_size){
         ///exception: out of bound
+        AddressOutofBound e;
+        cout << "ERROR: Address out of bound" << endl;
+        throw e;
     }
     block temp;
     temp.data = 0;
@@ -151,6 +157,9 @@ int LRUCache::read(int address){
 void LRUCache::write(int address, int data){
     if(address < 0 || address >= mem_size){
         /// exception
+        AddressOutofBound e;
+        cout << "ERROR: Address out of bound" << endl;
+        throw e;
     }
     // if hit
     block temp;
@@ -216,44 +225,99 @@ void LRUCache::printCache() {
 }
 // EFFECTS: prints the cache in given format
 
-
-
-int main(){
-    int cache_size, memory_size;
-    cin >> cache_size >> memory_size;
+void cache_operation(int & cache_size, int & memory_size){
     LRUCache sys(cache_size, memory_size);
     string cmd;
     while(getline(cin, cmd)){
         istringstream iStream(cmd);
-        string str[3];
-        iStream >> str[0] >> str[1] >> str[2];
+        string str[4];
+        iStream >> str[0] >> str[1] >> str[2] >> str[3];
         if(str[0] == "READ"){
             // READ command
             // str[1] is the address
+            if(str[1] == ""){
+                /// exception: not enough operands
+                cout << "ERROR: Not enough operands" << endl;
+                continue;
+            }
+            if(str[2] != ""){
+                /// exception: too many operands.
+                cout << "ERROR: Too many operands" << endl;
+                continue;
+            }
             int address = atoi(str[1].c_str());
-            cout << sys.read(address) << endl;
+            try{
+                cout << sys.read(address) << endl;
+            }
+            catch(AddressOutofBound &e){
+                continue;
+            }
         }
-        if(str[0] == "WRITE"){
+        else if(str[0] == "WRITE"){
             // WRITE command
             // str[1] is the address
             // str[2] is the data
+            if(str[2] == ""){
+                /// exception: not enough operands
+                cout << "ERROR: Not enough operands" << endl;
+                continue;
+            }
+            if(str[3] != ""){
+                /// exception: too many operands.
+                cout << "ERROR: Too many operands" << endl;
+                continue;
+            }
             int address = atoi(str[1].c_str());
             int data = atoi(str[2].c_str());
-            sys.write(address, data);
+            try{
+                sys.write(address, data);
+            }
+            catch(AddressOutofBound &e){
+                continue;
+            }
         }
-        if(str[0] == "PRINTCACHE"){
+        else if(str[0] == "PRINTCACHE"){
             // PRINTCACHE command
+            if(str[1] != ""){
+                /// exception: too many operands.
+                cout << "ERROR: Too many operands" << endl;
+                continue;
+            }
             sys.printCache();
         }
-        if(str[0] == "PRINTMEM"){
+        else if(str[0] == "PRINTMEM"){
             // PRINTMEM command
+            if(str[1] != ""){
+                /// exception: too many operands.
+                cout << "ERROR: Too many operands" << endl;
+                continue;
+            }
             sys.printMem();
         }
-        if(str[0] == "EXIT"){
+        else if(str[0] == "EXIT"){
+            if(str[1] != ""){
+                /// exception: too many operands.
+                cout << "ERROR: Too many operands" << endl;
+                continue;
+            }
             // EXIT command
             break;
         }
+            /// exception : unknown instruction.
+        else{
+            cout << "ERROR: Unknown instruction" << endl;
+        }
     }
+}
+// EFFECTS: execute the simulation of cache and memory.
 
+
+int main(){
+    int cache_size, memory_size;
+    string input;
+    getline(cin, input);
+    istringstream inputstream(input);
+    inputstream >> cache_size >> memory_size;
+    cache_operation(cache_size, memory_size);
     return 0;
 }
