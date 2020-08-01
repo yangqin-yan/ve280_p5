@@ -81,7 +81,7 @@ bool LRUCache::compare(const block *a, const block *b){
 // EFFECTS: returns true if two blocks have the same address
 
 LRUCache::LRUCache(int cache_size, int memory_size):
-mem_size(memory_size), cur_cache_size(0), max_cache_size(cache_size), memory(new int[mem_size])
+mem_size(memory_size), memory(new int[mem_size]), cur_cache_size(0), max_cache_size(cache_size)
 {
     for(int i = 0; i < mem_size; i++){
         memory[i] = 0;
@@ -93,6 +93,10 @@ mem_size(memory_size), cur_cache_size(0), max_cache_size(cache_size), memory(new
 
 LRUCache::~LRUCache(){
     delete[] memory;
+    while(!cache.isEmpty()){
+        block* victim = cache.removeFront();
+        delete victim;
+    }
 } // destructor
 
 int LRUCache::read(int address){
@@ -210,6 +214,7 @@ void LRUCache::printMem() {
     for(int i = 0; i < mem_size; i++){
         cout << memory[i] << " ";
     }
+    cout << endl;
 }
 // EFFECTS: prints the memory in given format
 
